@@ -10,16 +10,19 @@
 
 ## 编译固件步骤
 
-1. **Actions** → **Build_imm_高通410系列** → **Run workflow** → 选择设备型号 → 填写需要插件包 → Run workflow 开始编译
+1. 先把本仓库FOrk到自己账号下
+![拉流仓库](img/0.png)
+
+2. **Actions** → **Build_imm_高通410系列** → **Run workflow** → 选择设备型号 → 填写需要插件包 → Run workflow 开始编译
 ![编译教程](img/1.png)
 
-2. 编译约⏱️ 1.5-2 小时，插件越多时间越长.
+3. 编译约⏱️ 1.5-2 小时，插件越多时间越长.
 ![编译过程](img/2.png)
 
-3. **Releases** → 找到你编译的对应版本 → 下载你编译的版本（OpenWrt_xxx_xxx_刷机包.zip 解压即刷）
+4. **Releases** → 找到你编译的对应版本 → 下载你编译的版本（OpenWrt_xxx_xxx_刷机包.zip 解压即刷）
 ![下载固件包](img/3.png)
 
-如果你原本系统是linux或这opnewrt系统，就可以按照下面步骤升级就行。
+5. 如果你原本系统是linux或这opnewrt系统，就可以按照下面步骤升级就行。
 ![升级固件](img/4.png)
 
 如果你设备重来没刷过linux或者openwrt，还是原版安卓，就按下面教程刷入，注意必须备份分区。
