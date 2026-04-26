@@ -10,7 +10,7 @@
 
 ## 编译固件步骤
 
-1. 先把本仓库FOrk到自己账号下
+1. 先把本仓库Fork到你自己账号下
 ![拉流仓库](img/0.png)
 
 2. 你的仓库 → **Actions** → **Build_imm_高通410系列** → **Run workflow** → 选择设备型号 → 填写需要插件包 → Run workflow 开始编译
