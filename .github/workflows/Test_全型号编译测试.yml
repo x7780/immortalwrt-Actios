@@ -1,0 +1,148 @@
+#
+# 全型号并行编译测试 - 用于快速发现哪个型号有编译问题
+# 每个型号独立 job 并行运行，失败的会单独标红
+#
+
+name: Test_全型号编译测试
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 编译 ${{ matrix.profile }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    continue-on-error: true  # 某个型号失败不影响其他型号继续跑
+
+    strategy:
+      fail-fast: false  # 不因为某个失败就取消其他 job
+      matrix:
+        profile:
+          - ufi003
+          - ufi001c
+          - ufi001b
+          - ufi103s
+          - jz02v10
+          - qrzl903
+          - w001
+          - uz801
+          - mf32
+          - mf601
+          - wf2
+          - sp970v11
+          - sp970v10
+
+    env:
+      REPO_URL: https://github.com/lkiuyu/immortalwrt
+      REPO_BRANCH: master
+      FEEDS_CONF: feeds.conf.default
+      DIY_P1_SH: diy-part1.sh
+      DIY_P2_SH: diy-part2.sh
+      TZ: Asia/Shanghai
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: false
+        android: false
+        dotnet: false
+        haskell: false
+        large-packages: false
+        docker-images: false
+        swap-storage: true
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo -E apt-get -y update
+        sudo -E apt-get -y install $(curl -fsSL https://raw.githubusercontent.com/xuxin1955/depend_ubuntu2204_openwrt/refs/heads/main/depend_ubuntu2204_openwrt)
+
+    - name: mkbootimg build
+      run: |
+        wget https://github.com/xuxin1955/depend_ubuntu2204_openwrt/releases/download/ubuntu_26.04_LTS_mkbootimg/mkbootimg_34.0.5-12build1_all.deb
+        sudo dpkg -i mkbootimg_34.0.5-12build1_all.deb
+        sudo apt-get install -f -y
+        mkbootimg --help || true
+        sudo timedatectl set-timezone "$TZ"
+        sudo chmod 777 /mnt
+
+    - name: Ensure Python build tools
+      run: |
+        python3 -m pip install --upgrade --force-reinstall pip
+        python3 -m pip install --upgrade --force-reinstall 'setuptools>=65' wheel
+        python3 -m pip install --upgrade 'setuptools-scm>=8,<10'
+        python3 -m pip install --upgrade cython packaging tomli
+        python3 -m pip install Unidecode pyelftools
+
+    - name: Clone source code
+      working-directory: /mnt
+      run: |
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        ln -sf /mnt/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Copy files
+      run: cp -r files openwrt/files
+
+    - name: Load custom feeds
+      run: |
+        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+        chmod +x $DIY_P1_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P1_SH
+
+    - name: Update feeds
+      run: cd openwrt && ./scripts/feeds update -a
+
+    - name: Remove conflicting packages from smpackage
+      run: |
+        rm -rf openwrt/feeds/smpackage/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftables,ppp,opkg,ucl,upx,vsftpd*,miniupnpd-iptables,wireless-regdb}
+
+    - name: Install feeds
+      run: cd openwrt && ./scripts/feeds install -a -f
+
+    - name: Load custom configuration
+      run: |
+        [ -e files ] && mv files openwrt/files
+        CONFIG_FILE="config/${{ matrix.profile }}.config"
+        echo "Using config: $CONFIG_FILE"
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x $DIY_P2_SH
+        cd openwrt
+        $GITHUB_WORKSPACE/$DIY_P2_SH
+
+    - name: Config defconfig
+      run: |
+        cd openwrt
+        make defconfig
+
+    - name: Download package
+      run: |
+        cd openwrt
+        make download -j4 V=s
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Compile the firmware
+      id: compile
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 V=s
+        echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: 编译结果
+      if: always()
+      run: |
+        if [ "${{ steps.compile.outputs.status }}" = "success" ]; then
+          echo "✅ ${{ matrix.profile }} 编译成功"
+        else
+          echo "❌ ${{ matrix.profile }} 编译失败"
+          exit 1
+        fi
