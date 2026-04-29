@@ -160,10 +160,13 @@ jobs:
         if: steps.check.outputs.need_verify == 'true' && steps.build.outputs.status == 'success'
         run: |
           NEW_HASH="${{ steps.upstream.outputs.latest_hash }}"
+          # 更新当前锁定 hash
           echo "$NEW_HASH" > upstream_lock.txt
+          # 追加到历史记录
+          echo "$(date '+%Y-%m-%d %H:%M') $NEW_HASH" >> upstream_history.txt
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add upstream_lock.txt
+          git add upstream_lock.txt upstream_history.txt
           git commit -m "🔒 更新上游锁定 hash: ${NEW_HASH:0:7} [skip ci]"
           git push
 

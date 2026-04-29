@@ -36,7 +36,6 @@ on:
         type: choice
         options:
           - lkiuyu/immortalwrt
-          - xuxin1955/immortalwrt
         default: lkiuyu/immortalwrt
         required: true
       extra_packages:
