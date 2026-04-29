@@ -1,0 +1,173 @@
+name: 🔒 Sync_upstream_lock
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # 每周一凌晨2点自动运行
+  workflow_dispatch:      # 支持手动触发
+
+env:
+  UPSTREAM: lkiuyu/immortalwrt
+  REPO_BRANCH: master
+  FEEDS_CONF: feeds.conf.default
+  DIY_P1_SH: diy-part1.sh
+  DIY_P2_SH: diy-part2.sh
+  TZ: Asia/Shanghai
+  # 用 ufi103s 作为验证机型（体积适中，包含 glib2/libmbim 依赖，最能暴露问题）
+  VERIFY_PROFILE: ufi103s
+  CONFIG_FILE: config/ufi103s.config
+
+jobs:
+  verify-and-lock:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    name: 🔍 验证上游并更新锁定 hash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 读取当前锁定的 hash (Read current locked hash)
+        id: current
+        run: |
+          if [ -f upstream_lock.txt ]; then
+            echo "locked_hash=$(cat upstream_lock.txt)" >> $GITHUB_OUTPUT
+            echo "当前锁定 hash: $(cat upstream_lock.txt)"
+          else
+            echo "locked_hash=" >> $GITHUB_OUTPUT
+            echo "upstream_lock.txt 不存在，将首次写入"
+          fi
+
+      - name: 获取上游最新 hash (Get latest upstream hash)
+        id: upstream
+        run: |
+          LATEST=$(git ls-remote https://github.com/$UPSTREAM refs/heads/$REPO_BRANCH | cut -f1)
+          echo "latest_hash=$LATEST" >> $GITHUB_OUTPUT
+          echo "上游最新 hash: $LATEST"
+
+      - name: 检查是否需要验证 (Check if verification needed)
+        id: check
+        run: |
+          if [ "${{ steps.current.outputs.locked_hash }}" = "${{ steps.upstream.outputs.latest_hash }}" ]; then
+            echo "上游没有更新，跳过验证"
+            echo "need_verify=false" >> $GITHUB_OUTPUT
+          else
+            echo "检测到上游有新提交，开始验证"
+            echo "need_verify=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Free Disk Space
+        if: steps.check.outputs.need_verify == 'true'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: false
+          dotnet: false
+          haskell: false
+          large-packages: false
+          docker-images: false
+          swap-storage: true
+
+      - name: 安装依赖 (Install dependencies)
+        if: steps.check.outputs.need_verify == 'true'
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E apt-get -y update
+          sudo -E apt-get -y install $(curl -fsSL https://raw.githubusercontent.com/xuxin1955/depend_ubuntu2204_openwrt/refs/heads/main/depend_ubuntu2204_openwrt)
+          sudo timedatectl set-timezone "$TZ"
+          sudo chmod 777 /mnt
+
+      - name: 安装 mkbootimg
+        if: steps.check.outputs.need_verify == 'true'
+        run: |
+          wget https://github.com/xuxin1955/depend_ubuntu2204_openwrt/releases/download/ubuntu_26.04_LTS_mkbootimg/mkbootimg_34.0.5-12build1_all.deb
+          sudo dpkg -i mkbootimg_34.0.5-12build1_all.deb
+          sudo apt-get install -f -y
+
+      - name: 安装 Python 工具
+        if: steps.check.outputs.need_verify == 'true'
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install Unidecode pyelftools
+
+      - name: 克隆上游源码 (Clone upstream)
+        if: steps.check.outputs.need_verify == 'true'
+        working-directory: /mnt
+        run: |
+          git clone https://github.com/$UPSTREAM -b $REPO_BRANCH openwrt
+          ln -sf /mnt/openwrt $GITHUB_WORKSPACE/openwrt
+
+      - name: 复制文件和配置
+        if: steps.check.outputs.need_verify == 'true'
+        run: |
+          cp -r files openwrt/files
+          [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
+          [ -e $CONFIG_FILE ] && cp $CONFIG_FILE openwrt/.config
+
+      - name: 运行 diy-part1.sh
+        if: steps.check.outputs.need_verify == 'true'
+        run: |
+          chmod +x $DIY_P1_SH
+          cd openwrt
+          $GITHUB_WORKSPACE/$DIY_P1_SH
+
+      - name: 更新 feeds
+        if: steps.check.outputs.need_verify == 'true'
+        run: cd openwrt && ./scripts/feeds update -a
+
+      - name: 删除冲突包
+        if: steps.check.outputs.need_verify == 'true'
+        run: |
+          rm -rf openwrt/feeds/smpackage/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftables,ppp,opkg,ucl,upx,vsftpd*,miniupnpd-iptables,wireless-regdb}
+
+      - name: 安装 feeds
+        if: steps.check.outputs.need_verify == 'true'
+        run: cd openwrt && ./scripts/feeds install -a -f
+
+      - name: 运行 diy-part2.sh
+        if: steps.check.outputs.need_verify == 'true'
+        run: |
+          chmod +x $DIY_P2_SH
+          cd openwrt
+          $GITHUB_WORKSPACE/$DIY_P2_SH
+
+      - name: 生成配置
+        if: steps.check.outputs.need_verify == 'true'
+        run: cd openwrt && make defconfig
+
+      - name: 下载包
+        if: steps.check.outputs.need_verify == 'true'
+        run: |
+          cd openwrt
+          make download -j4 V=s
+          find dl -size -1024c -exec rm -f {} \;
+
+      - name: 验证编译 (Verify build)
+        if: steps.check.outputs.need_verify == 'true'
+        id: build
+        run: |
+          cd openwrt
+          make tools/install toolchain/install -j$(nproc)
+          make package/feeds/packages/glib2/compile -j$(nproc)
+          make package/feeds/packages/libmbim/compile -j$(nproc)
+          make -j$(nproc) || make -j1 V=s
+          echo "status=success" >> $GITHUB_OUTPUT
+
+      - name: 更新锁定 hash (Update locked hash on success)
+        if: steps.check.outputs.need_verify == 'true' && steps.build.outputs.status == 'success'
+        run: |
+          NEW_HASH="${{ steps.upstream.outputs.latest_hash }}"
+          echo "$NEW_HASH" > upstream_lock.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add upstream_lock.txt
+          git commit -m "🔒 更新上游锁定 hash: ${NEW_HASH:0:7} [skip ci]"
+          git push
+
+      - name: 验证失败通知 (Notify on failure)
+        if: steps.check.outputs.need_verify == 'true' && steps.build.outputs.status != 'success'
+        run: |
+          echo "::warning::上游 $UPSTREAM 最新提交编译失败，保留旧的锁定 hash: ${{ steps.current.outputs.locked_hash }}"
+          echo "上游 hash ${{ steps.upstream.outputs.latest_hash }} 验证失败，未更新 upstream_lock.txt"
