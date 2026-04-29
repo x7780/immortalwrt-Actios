@@ -47,13 +47,13 @@ jobs:
     - name: Apply minimal config
       run: |
         cd openwrt
-        cat > .config <<'EOF'
-CONFIG_TARGET_msm89xx=y
-CONFIG_TARGET_msm89xx_msm8916=y
-CONFIG_TARGET_msm89xx_msm8916_DEVICE_openstick-ufi103s=y
-CONFIG_PACKAGE_glib2=y
-CONFIG_PACKAGE_libmbim=y
-EOF
+        printf '%s\n' \
+          'CONFIG_TARGET_msm89xx=y' \
+          'CONFIG_TARGET_msm89xx_msm8916=y' \
+          'CONFIG_TARGET_msm89xx_msm8916_DEVICE_openstick-ufi103s=y' \
+          'CONFIG_PACKAGE_glib2=y' \
+          'CONFIG_PACKAGE_libmbim=y' \
+          > .config
         make defconfig
 
     - name: Compile glib2
