@@ -64,7 +64,7 @@ jobs:
       contents: write
       actions: write
     steps:
-    - name: 🚀 Checkout
+    - name: 🚀 编译 (Build)
       uses: actions/checkout@main
 
     - name: Show hardware info
