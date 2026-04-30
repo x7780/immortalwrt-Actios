@@ -165,6 +165,8 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           echo "$NEW_HASH" > upstream_lock.txt
+          # 确保文件末尾有换行再追加
+          [ -f upstream_history.txt ] && [ -n "$(tail -c1 upstream_history.txt)" ] && echo "" >> upstream_history.txt
           echo "$(date '+%Y-%m-%d') $NEW_HASH" >> upstream_history.txt
           git add upstream_lock.txt upstream_history.txt
           git commit -m "🔒 更新上游锁定 hash: ${NEW_HASH:0:7} [skip ci]"
