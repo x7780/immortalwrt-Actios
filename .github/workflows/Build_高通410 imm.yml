@@ -43,6 +43,11 @@ on:
         required: false
         default: ''
         type: string
+      custom_hash:
+        description: ' ↓ 指定上游 commit hash（留空则自动使用 upstream_lock.txt 中已验证的稳定版本；如固件有问题可从 upstream_history.txt 查历史填入旧 hash 回滚）↓ '
+        required: false
+        default: ''
+        type: string
 
 env:
   REPO_URL: https://github.com/${{ github.event.inputs.upstream }}
@@ -124,8 +129,12 @@ jobs:
     - name: 读取锁定的上游 hash (Read locked upstream hash)
       id: lock
       run: |
+        CUSTOM_HASH="${{ github.event.inputs.custom_hash }}"
         LOCK_FILE="upstream_lock.txt"
-        if [ -f "$LOCK_FILE" ]; then
+        if [ -n "$CUSTOM_HASH" ]; then
+          echo "locked_hash=$CUSTOM_HASH" >> $GITHUB_OUTPUT
+          echo "使用用户指定 hash: $CUSTOM_HASH"
+        elif [ -f "$LOCK_FILE" ]; then
           HASH=$(cat $LOCK_FILE)
           echo "locked_hash=$HASH" >> $GITHUB_OUTPUT
           echo "使用锁定 hash: $HASH"
