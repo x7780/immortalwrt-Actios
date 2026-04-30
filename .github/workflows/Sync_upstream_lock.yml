@@ -1,4 +1,4 @@
-name: 🔒 每3天验证上流是否可以编译
+name: 🔒 每3天验证更新hash
 
 on:
   schedule:
