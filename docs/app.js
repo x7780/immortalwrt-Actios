@@ -70,7 +70,7 @@ const I18N = {
     sum_hostname: "主机名",
     sum_no_pkg: "无（仅默认）",
     sum_ip_default: "192.168.1.1（默认）",
-    sum_hostname_default: "OpenWrt（默认）",
+    sum_hostname_default: "ImmortalWrt（默认）",
     // status
     err_fill: "请填写仓库地址和 Token",
     err_repo_fmt: "仓库格式错误，应为：用户名/仓库名",
@@ -153,7 +153,7 @@ const I18N = {
     sum_hostname: "Hostname",
     sum_no_pkg: "None (defaults only)",
     sum_ip_default: "192.168.1.1 (default)",
-    sum_hostname_default: "OpenWrt (default)",
+    sum_hostname_default: "ImmortalWrt (default)",
     err_fill: "Please fill in repository and Token",
     err_repo_fmt: "Invalid format, should be: username/repo",
     verifying: "⏳ Verifying...",

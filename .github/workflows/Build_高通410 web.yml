@@ -207,8 +207,8 @@ jobs:
         # 应用自定义主机名
         if [ -n "$CUSTOM_HOSTNAME" ]; then
           echo "🏷️ 设置主机名: $CUSTOM_HOSTNAME"
-          sed -i "s/set system\.@system\[0\]\.hostname='OpenWrt'/set system.@system[0].hostname='$CUSTOM_HOSTNAME'/" package/base-files/files/bin/config_generate || true
-          sed -i "s/option hostname 'OpenWrt'/option hostname '$CUSTOM_HOSTNAME'/" package/base-files/files/etc/config/system 2>/dev/null || true
+          sed -i "s/set system\.@system\[0\]\.hostname='ImmortalWrt'/set system.@system[0].hostname='$CUSTOM_HOSTNAME'/" package/base-files/files/bin/config_generate || true
+          sed -i "s/option hostname 'ImmortalWrt'/option hostname '$CUSTOM_HOSTNAME'/" package/base-files/files/etc/config/system 2>/dev/null || true
         fi
 
         # 过滤掉特殊前缀，只处理真正的包名
@@ -361,7 +361,7 @@ jobs:
         CUSTOM_IP=$(echo "$RAW" | grep -oP '(?<=__ip__)[^,\s]+' || true)
         CUSTOM_HOSTNAME=$(echo "$RAW" | grep -oP '(?<=__hostname__)[^,\s]+' || true)
         DISPLAY_IP=${CUSTOM_IP:-192.168.1.1}
-        DISPLAY_HOSTNAME=${CUSTOM_HOSTNAME:-OpenWrt}
+        DISPLAY_HOSTNAME=${CUSTOM_HOSTNAME:-ImmortalWrt}
         # 过滤掉特殊前缀，只显示真正的包名
         EXTRA=$(echo "$RAW" | sed 's/,/ /g' | tr ' ' '\n' | grep -v '^__ip__' | grep -v '^__hostname__' | sed '/^$/d')
 
