@@ -441,7 +441,7 @@ let selectedDevice  = "ufi003";
 let selectedPlugins = new Set();
 let isVerified      = false;
 let currentLang     = "zh";
-let currentTheme    = "dark";
+let currentTheme    = "light";
 
 // ============================================================
 // 工具
