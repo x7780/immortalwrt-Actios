@@ -7,7 +7,7 @@
     },
     {
       "text": "购买设备",
-      "url": "https://m.tb.cn/h.ikewKeE?tk=sY5z5265Lof CZ007"
+      "url": "https://www.goofish.com/personal?spm=a21ybx.item.itemHeader.1.6aad3da6riLkJQ&userId=36900812"
     },
     {
       "text": "抖音",
@@ -18,7 +18,7 @@
       "url": "https://github.com/x7780"
     },
     {
-      "text": "刷机系统备份",
+      "text": "刷机包网盘",
       "url": "https://www.123912.com/s/dgXbjv-Gfsfd"
     }
   ],
@@ -29,7 +29,7 @@
   "steps": [
     {
       "warn": false,
-      "text": "发现设备不能安装插件，更新源也出错，主要你的版本可能需要更新了，内核需要更新了。只能自己使用最新版本系统，下面网址打开，可以傻瓜一键更新定制固件。",
+      "text": "发现设备不能安装插件，更新源也出错，主要你的版本可能需要更新了，内核需要更新。只能自己使用最新版本系统，下面网址打开，可以傻瓜一键更新定制固件。",
       "warnings": [
         "⚠ 升级最新版本补丁，需要使用QualcommPremiumTool备份rootfs和boot俩个分区。",
         "⚠ 刷机有风险，刷机可能会导致不能开机，刷机请先学习一些刷机知识。"
@@ -100,7 +100,7 @@
     },
     {
       "warn": false,
-      "text": "如果不想使用外部大卡，可以自行更改切开脚本（部分机型没有这个脚本）",
+      "text": "如果不想使用外部大卡，可以自行更改切卡脚本（部分机型没有这个脚本）",
       "warnings": [
         "⚠ 如果你在这里没找到切卡脚本，那只能说明你的机器不能切卡"
       ],
@@ -108,6 +108,19 @@
         {
           "title": "bash — 切卡脚本位置",
           "code": "/etc/cardswitch/cardswitch.sh"
+        }
+      ]
+    },
+    {
+      "warn": false,
+      "text": "网友（邻家小少）提供的istoreos脚本，可以安装istoreos主题，商城等插件",
+      "warnings": [
+        "⚠ 包括istoreos大部分功能，应用商城，主题，向导，硬盘管理等"
+      ],
+      "terminals": [
+        {
+          "title": "bash — istoreos 安装脚本位置",
+          "code": "sh -c \"$(curl -fsSL https://cafe.cpolar.cn/wkdaily/gl/raw/branch/main/gl-inet.sh)\""
         }
       ]
     },
@@ -149,6 +162,11 @@
       "title": "高通410随身wifi玩法讨论社区",
       "meta": "github · github.com",
       "url": "https://github.com/x7780/immortalwrt-Actios/discussions"
+    },
+    {
+      "title": "一张图学会升级openwrt固件",
+      "meta": "github · github.com",
+      "url": "https://raw.githubusercontent.com/x7780/immortalwrt-Actios/main/img/4.png"
     },
     {
       "title": "极简的openwrt固件刷机包",

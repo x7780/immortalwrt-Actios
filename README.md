@@ -65,7 +65,7 @@
 | 路径 | 用途说明 |
 |------|---------|
 | `config/` | 各设备型号的编译配置文件，文件名对应设备型号（如 `ufi003.config`） |
-| `files/` | 编译后覆盖到固件，全是系统配置文件，[files/www 更改首页指南请看这个仓库](https://github.com/x7780/suishen-wifi) |
+| `files/` | 编译后覆盖到固件，全是系统配置文件，首页和远程内容都在 [files/www](https://github.com/x7780/immortalwrt-Actios/tree/main/files/www) |
 | `img/` | README 文档中使用的教程截图 |
 | `scripts/` | 编译过程中执行的辅助脚本 |
 | `工具与脚本/` | 刷机相关工具和辅助脚本合集，包括9008驱动，基带，完整的刷机脚本，等等 |
